@@ -10,12 +10,13 @@ class LogEntry:
     message: str
 
 class ImmutableLogger:
-    def __init__(self):
+    def __init__(self, log_file: str = "app.log"):
         self._logs: List[LogEntry] = []
         self._lock = Lock()
+        self._log_file = log_file
 
     def log(self, level: str, message: str) -> None:
-        """Add a new log entry with the specified level and message."""
+        """Add a new log entry with the specified level and message, and write to file."""
         with self._lock:
             entry = LogEntry(
                 timestamp=datetime.datetime.now(),
@@ -23,6 +24,13 @@ class ImmutableLogger:
                 message=message
             )
             self._logs.append(entry)
+            self._write_to_file(entry)
+
+    def _write_to_file(self, entry: LogEntry) -> None:
+        """Write a single log entry to the file in a thread-safe manner."""
+        with self._lock:
+            with open(self._log_file, 'a', encoding='utf-8') as f:
+                f.write(f"[{entry.timestamp}] {entry.level}: {entry.message}\n")
 
     def get_logs(self) -> Tuple[LogEntry, ...]:
         """Return a tuple of all log entries to ensure immutability."""
