@@ -1,24 +1,26 @@
 # ImmutableLogger
 
-`ImmutableLogger` is a thread-safe, immutable logging utility for Python that writes logs to a file. Its immutable nature ensures that each log action creates a new logger instance, preserving the history of logs in an immutable state. This makes it particularly useful in multi-threaded applications where a shared mutable state can lead to complex synchronization issues.
+A thread-safe, immutable logging utility for Python that writes logs to a file. Each log action creates a new logger instance, preserving the history of logs in an immutable state. This makes it particularly useful in multi-threaded applications where shared mutable state can lead to complex synchronization issues.
 
 ## Features
 
-- **Immutability**: Each logging action (e.g., `info`, `warning`, `error`) returns a new `ImmutableLogger` instance, leaving the original instance unchanged.
-- **File-based Logging**: All log entries are written to a specified log file.
-- **Log Rotation**: Automatically rotates log files when they exceed a specified size, preventing them from growing indefinitely.
-- **Log Filtering**: Allows retrieving logs filtered by their level (e.g., `INFO`, `WARNING`, `ERROR`).
-- **Easy to Use**: Provides a simple and intuitive API for logging.
+- **Immutability**: Each logging action returns a new `ImmutableLogger` instance, leaving the original unchanged
+- **File-based Logging**: All log entries are written to a specified log file
+- **Log Rotation**: Automatically rotates log files when they exceed a specified size
+- **Log Filtering**: Retrieve logs filtered by level (INFO, WARNING, ERROR, or custom)
+- **Zero Dependencies**: Uses only Python standard library
 
 ## Installation
 
-No external dependencies are required. Simply place the `ImmutableLogger.py` file in your project.
+No external dependencies required. Simply copy `ImmutableLogger.py` into your project.
+
+```bash
+git clone https://github.com/sbj-ee/ImmutableLogger.git
+```
 
 ## Usage
 
 ### Basic Logging
-
-Here's a simple example of how to use `ImmutableLogger`:
 
 ```python
 from ImmutableLogger import ImmutableLogger
@@ -26,7 +28,7 @@ from ImmutableLogger import ImmutableLogger
 # Initialize the logger
 logger = ImmutableLogger(log_file="./logs/app.log", max_file_size=1024 * 1024)
 
-# Log messages
+# Log messages (each call returns a new logger instance)
 logger = logger.info("Application started")
 logger = logger.warning("Low disk space")
 logger = logger.error("Failed to connect to database")
@@ -37,7 +39,7 @@ print(logger)
 # Retrieve and print only ERROR logs
 error_logs = logger.get_logs("ERROR")
 for log in error_logs:
-    print(log)
+    print(f"{log.timestamp}: {log.message}")
 ```
 
 ### Immutability in Action
@@ -58,31 +60,74 @@ print(f"logger2 has {len(logger2.get_logs())} logs")
 print(f"logger3 has {len(logger3.get_logs())} logs")
 ```
 
+### Method Chaining
+
+```python
+logger = ImmutableLogger()
+logger = (
+    logger.info("Starting process")
+    .warning("Resource usage high")
+    .error("Process failed")
+)
+```
+
+### Custom Log Levels
+
+```python
+logger = ImmutableLogger()
+logger = logger.log("DEBUG", "Debugging information")
+logger = logger.log("CRITICAL", "System failure")
+```
+
 ### Configuration
 
-You can configure the logger by passing arguments to its constructor:
-
-- `log_file` (str): The path to the log file. Defaults to `./app.log`.
-- `max_file_size` (int): The maximum size of the log file in bytes before rotation. Defaults to `1048576` (1MB).
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `log_file` | str | `"./app.log"` | Path to the log file |
+| `max_file_size` | int | `1048576` (1MB) | Maximum file size before rotation |
 
 ```python
 # Custom configuration
-custom_logger = ImmutableLogger(
+logger = ImmutableLogger(
     log_file="/var/log/my_app.log",
     max_file_size=5 * 1024 * 1024  # 5MB
 )
 ```
 
-## Running Tests
+## API Reference
 
-To run the tests, you'll need to install `pytest`:
+### ImmutableLogger
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `info(message)` | `ImmutableLogger` | Log an INFO level message |
+| `warning(message)` | `ImmutableLogger` | Log a WARNING level message |
+| `error(message)` | `ImmutableLogger` | Log an ERROR level message |
+| `log(level, message)` | `ImmutableLogger` | Log a message with custom level |
+| `get_logs(level=None)` | `Tuple[LogEntry, ...]` | Get all logs, optionally filtered by level |
+
+### LogEntry
+
+Immutable dataclass with the following attributes:
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `timestamp` | `datetime` | When the log was created |
+| `level` | `str` | Log level (INFO, WARNING, ERROR, etc.) |
+| `message` | `str` | Log message content |
+
+## Running Tests
 
 ```bash
 pip install pytest
+pytest test_logging.py -v
 ```
 
-Then, you can run the tests from the root of the project:
+## Requirements
 
-```bash
-pytest
-```
+- Python 3.10+
+- pytest (for running tests only)
+
+## License
+
+MIT

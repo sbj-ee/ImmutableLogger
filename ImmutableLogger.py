@@ -1,8 +1,9 @@
 import datetime
-import os
-from typing import List, Tuple, Optional
-from dataclasses import dataclass
 import logging
+import os
+from dataclasses import dataclass
+from typing import Optional, Sequence, Tuple
+
 
 @dataclass(frozen=True)
 class LogEntry:
@@ -10,8 +11,14 @@ class LogEntry:
     level: str
     message: str
 
+
 class ImmutableLogger:
-    def __init__(self, log_file: str = "./app.log", max_file_size: int = 1024 * 1024, _logs: Optional[List[LogEntry]] = None):
+    def __init__(
+        self,
+        log_file: str = "./app.log",
+        max_file_size: int = 1024 * 1024,
+        _logs: Optional[Sequence[LogEntry]] = None,
+    ):
         """Initialize logger with log file path, max file size (in bytes), and optional initial logs."""
         self._logs: Tuple[LogEntry, ...] = tuple(_logs) if _logs else tuple()
         self._log_file = log_file
@@ -58,7 +65,7 @@ class ImmutableLogger:
         except (IOError, OSError) as e:
             logging.error(f"Failed to rotate log file: {e}")
 
-    def get_logs(self, level: str = None) -> Tuple[LogEntry, ...]:
+    def get_logs(self, level: Optional[str] = None) -> Tuple[LogEntry, ...]:
         """Return a tuple of all log entries, optionally filtered by level."""
         if level:
             return tuple(entry for entry in self._logs if entry.level == level.upper())
